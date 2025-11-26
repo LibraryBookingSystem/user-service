@@ -82,6 +82,12 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- AOP for aspects -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+		
 		<!-- gRPC -->
 		<dependency>
 			<groupId>net.devh</groupId>

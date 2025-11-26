@@ -6,7 +6,7 @@ spring:
     name: user-service
   
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_db}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:user_db}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -38,7 +38,7 @@ grpc:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-change-this}
+  secret: ${JWT_SECRET:my-super-secret-jwt-key-for-library-booking-system-2024}
   expiration: ${JWT_EXPIRATION:3600000}
 
 # Logging
