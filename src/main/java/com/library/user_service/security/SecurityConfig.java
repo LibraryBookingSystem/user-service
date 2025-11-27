@@ -10,8 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Security configuration for the application
- * For now, we're keeping it simple - allowing most endpoints
+ * Security configuration for user service
+ * Handles password encoding and basic security
+ * JWT validation will be done at the gateway level
  */
 @Configuration
 @EnableWebSecurity
@@ -19,18 +20,17 @@ public class SecurityConfig {
     
     /**
      * Configure HTTP security
-     * We're disabling CSRF since we're using JWT tokens
-     * All endpoints are permitted for now (we'll add authentication later)
+     * All endpoints are permitted - authentication is handled by gateway
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for JWT
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // Allow all requests for now
+                .anyRequest().permitAll()
             )
             .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions, we use JWT
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
         
         return http.build();

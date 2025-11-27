@@ -7,7 +7,6 @@ import com.library.user_service.exception.InvalidCredentialsException;
 import com.library.user_service.exception.UserAlreadyExistsException;
 import com.library.user_service.exception.UserNotFoundException;
 import com.library.user_service.repository.UserRepository;
-import com.library.user_service.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,23 +27,19 @@ public class UserService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
     
-    // @Autowired is optional when there's only one constructor
     public UserService(UserRepository userRepository, 
-                      PasswordEncoder passwordEncoder,
-                      JwtUtil jwtUtil) {
+                      PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
     }
     
     /**
-     * Register a new user
+     * Create a new user (internal - called by auth-service)
      */
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        logger.info("Attempting to register user: {}", request.getUsername());
+    public UserResponse createUser(CreateUserRequest request) {
+        logger.info("Creating user: {}", request.getUsername());
         
         // Check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -71,24 +66,16 @@ public class UserService {
         
         // Save user to database
         user = userRepository.save(user);
-        logger.info("User registered successfully: {}", user.getUsername());
+        logger.info("User created successfully: {}", user.getUsername());
         
-        // Generate JWT token
-        String token = jwtUtil.generateToken(
-            user.getUsername(), 
-            user.getRole().name(), 
-            user.getId()
-        );
-        
-        // Return response with token and user info
-        return new AuthResponse(token, UserResponse.fromUser(user));
+        return UserResponse.fromUser(user);
     }
     
     /**
-     * Login user
+     * Validate user credentials (internal - called by auth-service)
      */
-    public AuthResponse login(LoginRequest request) {
-        logger.info("Login attempt for user: {}", request.getUsername());
+    public UserResponse validateCredentials(ValidateCredentialsRequest request) {
+        logger.info("Validating credentials for user: {}", request.getUsername());
         
         // Find user by username
         User user = userRepository.findByUsername(request.getUsername())
@@ -104,16 +91,9 @@ public class UserService {
             throw new InvalidCredentialsException("Account is restricted: " + user.getRestrictionReason());
         }
         
-        logger.info("User logged in successfully: {}", user.getUsername());
+        logger.info("Credentials validated successfully for user: {}", user.getUsername());
         
-        // Generate JWT token
-        String token = jwtUtil.generateToken(
-            user.getUsername(), 
-            user.getRole().name(), 
-            user.getId()
-        );
-        
-        return new AuthResponse(token, UserResponse.fromUser(user));
+        return UserResponse.fromUser(user);
     }
     
     /**

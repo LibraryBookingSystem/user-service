@@ -4,7 +4,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class RegisterRequest {
+/**
+ * Internal DTO for creating a user (called by auth-service)
+ */
+public class CreateUserRequest {
     
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -20,7 +23,7 @@ public class RegisterRequest {
     
     private String role = "STUDENT";
     
-    public RegisterRequest() {}
+    public CreateUserRequest() {}
     
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
