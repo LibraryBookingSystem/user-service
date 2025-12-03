@@ -23,6 +23,19 @@ public class UserController {
     }
     
     /**
+     * Get current authenticated user
+     * GET /api/users/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UserResponse user = userService.getUserById(userId);
+        return ResponseEntity.ok(user);
+    }
+    
+    /**
      * Get user by ID
      * GET /api/users/{id}
      */
