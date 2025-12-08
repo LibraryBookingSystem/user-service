@@ -1,6 +1,7 @@
 package com.library.user_service.controller;
 
 import com.library.user_service.dto.UserResponse;
+import com.library.user_service.entity.UserRole;
 import com.library.user_service.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -96,6 +97,97 @@ public class UserController {
     public ResponseEntity<Map<String, Boolean>> isUserRestricted(@PathVariable Long id) {
         boolean restricted = userService.isUserRestricted(id);
         return ResponseEntity.ok(Map.of("restricted", restricted));
+    }
+    
+    /**
+     * Get pending users (FACULTY/ADMIN only)
+     * GET /api/users/pending
+     */
+    @GetMapping("/pending")
+    public ResponseEntity<List<UserResponse>> getPendingUsers(
+            @RequestHeader(value = "X-User-Role", required = false) String userRoleStr) {
+        if (userRoleStr == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UserRole requesterRole = UserRole.valueOf(userRoleStr.toUpperCase());
+            List<UserResponse> pendingUsers = userService.getPendingUsers(requesterRole);
+            return ResponseEntity.ok(pendingUsers);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).build();
+        }
+    }
+    
+    /**
+     * Get rejected users (FACULTY/ADMIN only)
+     * GET /api/users/rejected
+     */
+    @GetMapping("/rejected")
+    public ResponseEntity<List<UserResponse>> getRejectedUsers(
+            @RequestHeader(value = "X-User-Role", required = false) String userRoleStr) {
+        if (userRoleStr == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UserRole requesterRole = UserRole.valueOf(userRoleStr.toUpperCase());
+            List<UserResponse> rejectedUsers = userService.getRejectedUsers(requesterRole);
+            return ResponseEntity.ok(rejectedUsers);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).build();
+        }
+    }
+    
+    /**
+     * Approve a user (works for both pending and rejected users)
+     * POST /api/users/{id}/approve
+     */
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<UserResponse> approveUser(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String approverRoleStr) {
+        if (approverRoleStr == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UserRole approverRole = UserRole.valueOf(approverRoleStr.toUpperCase());
+            UserResponse approvedUser = userService.approveUser(id, approverRole);
+            return ResponseEntity.ok(approvedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).build();
+        }
+    }
+    
+    /**
+     * Reject a user
+     * POST /api/users/{id}/reject
+     */
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<UserResponse> rejectUser(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String approverRoleStr) {
+        if (approverRoleStr == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UserRole approverRole = UserRole.valueOf(approverRoleStr.toUpperCase());
+            UserResponse rejectedUser = userService.rejectUser(id, approverRole);
+            return ResponseEntity.ok(rejectedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).build();
+        }
+    }
+    /**
+     * Delete a user (admin only)
+     * DELETE /api/users/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
 

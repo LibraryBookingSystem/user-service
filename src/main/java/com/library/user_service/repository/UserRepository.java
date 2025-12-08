@@ -1,9 +1,11 @@
 package com.library.user_service.repository;
 
 import com.library.user_service.entity.User;
+import com.library.user_service.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,5 +37,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Check if email exists
      */
     boolean existsByEmail(String email);
+    
+    /**
+     * Find pending FACULTY users
+     */
+    List<User> findByPendingApprovalTrueAndRejectedFalseAndRole(UserRole role);
+    
+    /**
+     * Find pending FACULTY and ADMIN users
+     */
+    List<User> findByPendingApprovalTrueAndRejectedFalseAndRoleIn(List<UserRole> roles);
+    
+    /**
+     * Find rejected users by role
+     */
+    List<User> findByRejectedTrueAndRole(UserRole role);
+    
+    /**
+     * Find rejected users by roles
+     */
+    List<User> findByRejectedTrueAndRoleIn(List<UserRole> roles);
 }
 

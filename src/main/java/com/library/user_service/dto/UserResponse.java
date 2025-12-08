@@ -11,6 +11,8 @@ public class UserResponse {
     private String role;
     private boolean restricted;
     private String restrictionReason;
+    private boolean pendingApproval;
+    private boolean rejected;
     private LocalDateTime createdAt;
     
     public UserResponse() {}
@@ -23,6 +25,8 @@ public class UserResponse {
         response.setRole(user.getRole().name());
         response.setRestricted(user.isRestricted());
         response.setRestrictionReason(user.getRestrictionReason());
+        response.setPendingApproval(user.isPendingApproval());
+        response.setRejected(user.isRejected());
         response.setCreatedAt(user.getCreatedAt());
         return response;
     }
@@ -47,4 +51,10 @@ public class UserResponse {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public boolean isPendingApproval() { return pendingApproval; }
+    public void setPendingApproval(boolean pendingApproval) { this.pendingApproval = pendingApproval; }
+    
+    public boolean isRejected() { return rejected; }
+    public void setRejected(boolean rejected) { this.rejected = rejected; }
 }

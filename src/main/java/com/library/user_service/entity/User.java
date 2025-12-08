@@ -29,6 +29,12 @@ public class User {
     
     private String restrictionReason;
     
+    @Column(nullable = false)
+    private boolean pendingApproval = false;
+    
+    @Column(nullable = false)
+    private boolean rejected = false;
+    
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
@@ -126,6 +132,22 @@ public class User {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public boolean isPendingApproval() {
+        return pendingApproval;
+    }
+    
+    public void setPendingApproval(boolean pendingApproval) {
+        this.pendingApproval = pendingApproval;
+    }
+    
+    public boolean isRejected() {
+        return rejected;
+    }
+    
+    public void setRejected(boolean rejected) {
+        this.rejected = rejected;
     }
 }
 
