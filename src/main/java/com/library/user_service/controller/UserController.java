@@ -1,8 +1,11 @@
 package com.library.user_service.controller;
 
+import com.library.common.security.annotation.RequiresOwnership;
+import com.library.common.security.annotation.RequiresRole;
 import com.library.user_service.dto.UserResponse;
 import com.library.user_service.entity.UserRole;
 import com.library.user_service.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +14,7 @@ import java.util.Map;
 
 /**
  * Controller for user management endpoints
+ * Uses AOP annotations for RBAC authorization
  */
 @RestController
 @RequestMapping("/api/users")
@@ -18,7 +22,6 @@ public class UserController {
     
     private final UserService userService;
     
-    // @Autowired is optional when there's only one constructor
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -26,12 +29,12 @@ public class UserController {
     /**
      * Get current authenticated user
      * GET /api/users/me
+     * Authorization: AUTHENTICATED (Any role)
      */
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        if (userId == null) {
-            return ResponseEntity.status(401).build();
-        }
+    @RequiresRole // Any authenticated user
+    public ResponseEntity<UserResponse> getCurrentUser(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
         UserResponse user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
@@ -39,8 +42,12 @@ public class UserController {
     /**
      * Get user by ID
      * GET /api/users/{id}
+     * Authorization: AUTHENTICATED
+     * Resource Ownership: Users can view their own profile, Admins can view any profile
      */
     @GetMapping("/{id}")
+    @RequiresRole
+    @RequiresOwnership(resourceIdParam = "id", byUserId = true)
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse user = userService.getUserById(id);
         return ResponseEntity.ok(user);
@@ -49,28 +56,36 @@ public class UserController {
     /**
      * Get user by username
      * GET /api/users/username/{username}
+     * Authorization: AUTHENTICATED
+     * Resource Ownership: Users can view their own profile, Admins can view any profile
      */
     @GetMapping("/username/{username}")
+    @RequiresRole
+    @RequiresOwnership(resourceIdParam = "username", byUserId = false)
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         UserResponse user = userService.getUserByUsername(username);
         return ResponseEntity.ok(user);
     }
     
     /**
-     * Get all users (admin only in production)
+     * Get all users
      * GET /api/users
+     * Authorization: ADMIN only
      */
     @GetMapping
+    @RequiresRole({"ADMIN"})
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
     
     /**
-     * Restrict a user (admin only)
+     * Restrict a user
      * POST /api/users/{id}/restrict
+     * Authorization: ADMIN only
      */
     @PostMapping("/{id}/restrict")
+    @RequiresRole({"ADMIN"})
     public ResponseEntity<UserResponse> restrictUser(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
@@ -80,114 +95,100 @@ public class UserController {
     }
     
     /**
-     * Unrestrict a user (admin only)
+     * Unrestrict a user
      * POST /api/users/{id}/unrestrict
+     * Authorization: ADMIN only
      */
     @PostMapping("/{id}/unrestrict")
+    @RequiresRole({"ADMIN"})
     public ResponseEntity<UserResponse> unrestrictUser(@PathVariable Long id) {
         UserResponse user = userService.unrestrictUser(id);
         return ResponseEntity.ok(user);
     }
     
     /**
-     * Check if user is restricted (for other services)
+     * Check if user is restricted
      * GET /api/users/{id}/restricted
+     * Authorization: AUTHENTICATED
+     * Resource Ownership: Users can check their own status, Admins can check any
      */
     @GetMapping("/{id}/restricted")
+    @RequiresRole
+    @RequiresOwnership(resourceIdParam = "id", byUserId = true)
     public ResponseEntity<Map<String, Boolean>> isUserRestricted(@PathVariable Long id) {
         boolean restricted = userService.isUserRestricted(id);
         return ResponseEntity.ok(Map.of("restricted", restricted));
     }
     
     /**
-     * Get pending users (FACULTY/ADMIN only)
+     * Get pending users
      * GET /api/users/pending
+     * Authorization: FACULTY/ADMIN only
      */
     @GetMapping("/pending")
-    public ResponseEntity<List<UserResponse>> getPendingUsers(
-            @RequestHeader(value = "X-User-Role", required = false) String userRoleStr) {
-        if (userRoleStr == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        try {
-            UserRole requesterRole = UserRole.valueOf(userRoleStr.toUpperCase());
-            List<UserResponse> pendingUsers = userService.getPendingUsers(requesterRole);
-            return ResponseEntity.ok(pendingUsers);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).build();
-        }
+    @RequiresRole({"FACULTY", "ADMIN"})
+    public ResponseEntity<List<UserResponse>> getPendingUsers(HttpServletRequest request) {
+        String roleStr = (String) request.getAttribute("userRole");
+        UserRole requesterRole = UserRole.valueOf(roleStr);
+        List<UserResponse> pendingUsers = userService.getPendingUsers(requesterRole);
+        return ResponseEntity.ok(pendingUsers);
     }
     
     /**
-     * Get rejected users (FACULTY/ADMIN only)
+     * Get rejected users
      * GET /api/users/rejected
+     * Authorization: FACULTY/ADMIN only
      */
     @GetMapping("/rejected")
-    public ResponseEntity<List<UserResponse>> getRejectedUsers(
-            @RequestHeader(value = "X-User-Role", required = false) String userRoleStr) {
-        if (userRoleStr == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        try {
-            UserRole requesterRole = UserRole.valueOf(userRoleStr.toUpperCase());
-            List<UserResponse> rejectedUsers = userService.getRejectedUsers(requesterRole);
-            return ResponseEntity.ok(rejectedUsers);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).build();
-        }
+    @RequiresRole({"FACULTY", "ADMIN"})
+    public ResponseEntity<List<UserResponse>> getRejectedUsers(HttpServletRequest request) {
+        String roleStr = (String) request.getAttribute("userRole");
+        UserRole requesterRole = UserRole.valueOf(roleStr);
+        List<UserResponse> rejectedUsers = userService.getRejectedUsers(requesterRole);
+        return ResponseEntity.ok(rejectedUsers);
     }
     
     /**
-     * Approve a user (works for both pending and rejected users)
+     * Approve a user
      * POST /api/users/{id}/approve
+     * Authorization: FACULTY/ADMIN only
      */
     @PostMapping("/{id}/approve")
+    @RequiresRole({"FACULTY", "ADMIN"})
     public ResponseEntity<UserResponse> approveUser(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", required = false) String approverRoleStr) {
-        if (approverRoleStr == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        try {
-            UserRole approverRole = UserRole.valueOf(approverRoleStr.toUpperCase());
-            UserResponse approvedUser = userService.approveUser(id, approverRole);
-            return ResponseEntity.ok(approvedUser);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).build();
-        }
+            HttpServletRequest request) {
+        String roleStr = (String) request.getAttribute("userRole");
+        UserRole approverRole = UserRole.valueOf(roleStr);
+        UserResponse approvedUser = userService.approveUser(id, approverRole);
+        return ResponseEntity.ok(approvedUser);
     }
     
     /**
      * Reject a user
      * POST /api/users/{id}/reject
+     * Authorization: FACULTY/ADMIN only
      */
     @PostMapping("/{id}/reject")
+    @RequiresRole({"FACULTY", "ADMIN"})
     public ResponseEntity<UserResponse> rejectUser(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", required = false) String approverRoleStr) {
-        if (approverRoleStr == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        try {
-            UserRole approverRole = UserRole.valueOf(approverRoleStr.toUpperCase());
-            UserResponse rejectedUser = userService.rejectUser(id, approverRole);
-            return ResponseEntity.ok(rejectedUser);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).build();
-        }
+            HttpServletRequest request) {
+        String roleStr = (String) request.getAttribute("userRole");
+        UserRole approverRole = UserRole.valueOf(roleStr);
+        UserResponse rejectedUser = userService.rejectUser(id, approverRole);
+        return ResponseEntity.ok(rejectedUser);
     }
+    
     /**
-     * Delete a user (admin only)
+     * Delete a user
      * DELETE /api/users/{id}
+     * Authorization: ADMIN only
      */
     @DeleteMapping("/{id}")
+    @RequiresRole({"ADMIN"})
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 }
-

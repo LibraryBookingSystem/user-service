@@ -3,7 +3,7 @@ package com.library.user_service.service;
 import com.library.user_service.dto.*;
 import com.library.user_service.entity.User;
 import com.library.user_service.entity.UserRole;
-import com.library.user_service.exception.ForbiddenException;
+import com.library.common.exception.ForbiddenException;
 import com.library.user_service.exception.InvalidCredentialsException;
 import com.library.user_service.exception.UserAlreadyExistsException;
 import com.library.user_service.exception.UserNotFoundException;

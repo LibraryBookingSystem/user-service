@@ -119,6 +119,13 @@
 			<version>0.12.3</version>
 			<scope>runtime</scope>
 		</dependency>
+		
+		<!-- Common Aspects Library -->
+		<dependency>
+			<groupId>com.library</groupId>
+			<artifactId>common-aspects</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
