@@ -14,48 +14,52 @@ import java.util.Optional;
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     // Spring Data JPA will automatically implement these methods
     // based on the method names
-    
+
     /**
      * Find user by username
      */
     Optional<User> findByUsername(String username);
-    
+
     /**
      * Find user by email
      */
     Optional<User> findByEmail(String email);
-    
+
     /**
      * Check if username exists
      */
     boolean existsByUsername(String username);
-    
+
     /**
      * Check if email exists
      */
     boolean existsByEmail(String email);
-    
+
     /**
      * Find pending FACULTY users
      */
     List<User> findByPendingApprovalTrueAndRejectedFalseAndRole(UserRole role);
-    
+
     /**
      * Find pending FACULTY and ADMIN users
      */
     List<User> findByPendingApprovalTrueAndRejectedFalseAndRoleIn(List<UserRole> roles);
-    
+
     /**
      * Find rejected users by role
      */
     List<User> findByRejectedTrueAndRole(UserRole role);
-    
+
     /**
      * Find rejected users by roles
      */
     List<User> findByRejectedTrueAndRoleIn(List<UserRole> roles);
-}
 
+    /**
+     * Search users by partial username (case-insensitive contains)
+     */
+    List<User> findByUsernameContainingIgnoreCase(String username);
+}
